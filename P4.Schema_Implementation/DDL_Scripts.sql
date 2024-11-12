@@ -50,6 +50,15 @@ CREATE TABLE LogisticProvider (
     ServiceArea VARCHAR(100)
 );
 
+-- Creating Vehicle Table 
+CREATE TABLE Vehicle (
+    VehicleID INT PRIMARY KEY IDENTITY(1,1),
+    LicensePlate VARCHAR(15) NOT NULL UNIQUE,
+    Model VARCHAR(50),
+    Capacity DECIMAL(5, 2) CHECK (Capacity > 0),
+    AvailabilityStatus BIT DEFAULT 1
+);
+
 -- Creating DeliveryRoute Table
 CREATE TABLE DeliveryRoute (
     RouteID INT PRIMARY KEY IDENTITY(1,1),
@@ -101,23 +110,16 @@ CREATE TABLE VerificationCode (
     ExpirationDate DATETIME NOT NULL
 );
 
--- Creating DeliveryDriver Table (references LogisticProvider)
+-- Creating DeliveryDriver Table (references LogisticProvider and Vehicle)
 CREATE TABLE DeliveryDriver (
     DriverID INT PRIMARY KEY IDENTITY(1,1),
     ProviderID INT NOT NULL,
+    VehicleID INT, 
     Name VARCHAR(100) NOT NULL,
     LicenseNumber VARCHAR(20) UNIQUE NOT NULL,
     AvailabilityStatus BIT DEFAULT 1,
-    FOREIGN KEY (ProviderID) REFERENCES LogisticProvider(ProviderID)
-);
-
--- Creating Vehicle Table
-CREATE TABLE Vehicle (
-    VehicleID INT PRIMARY KEY IDENTITY(1,1),
-    LicensePlate VARCHAR(15) NOT NULL UNIQUE,
-    Model VARCHAR(50),
-    Capacity DECIMAL(5, 2) CHECK (Capacity > 0),
-    AvailabilityStatus BIT DEFAULT 1
+    FOREIGN KEY (ProviderID) REFERENCES LogisticProvider(ProviderID),
+    FOREIGN KEY (VehicleID) REFERENCES Vehicle(VehicleID)
 );
 
 -- Creating Package Table (references Order, DeliveryDriver, SmartLocker)

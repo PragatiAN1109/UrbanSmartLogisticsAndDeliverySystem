@@ -105,19 +105,6 @@ INSERT INTO VerificationCode (ExpirationDate) VALUES
 ('2024-12-23'),
 ('2024-12-22');
 
--- Insert data into DeliveryDriver table
-INSERT INTO DeliveryDriver (ProviderID, Name, LicenseNumber, AvailabilityStatus) VALUES
-(1, 'Tom Hardy', 'LIC12345', 1),
-(2, 'Sarah Connor', 'LIC67890', 0),
-(3, 'John Wick', 'LIC11121', 1),
-(4, 'Bruce Wayne', 'LIC22232', 1),
-(5, 'Clark Kent', 'LIC33343', 0),
-(6, 'Diana Prince', 'LIC44454', 1),
-(7, 'Barry Allen', 'LIC55565', 1),
-(8, 'Peter Parker', 'LIC66676', 1),
-(9, 'Tony Stark', 'LIC77787', 0),
-(10, 'Steve Rogers', 'LIC88898', 1);
-
 -- Insert data into Vehicle table
 INSERT INTO Vehicle (LicensePlate, Model, Capacity, AvailabilityStatus) VALUES
 ('ABC123', 'Van', 3.5, 1),
@@ -130,6 +117,19 @@ INSERT INTO Vehicle (LicensePlate, Model, Capacity, AvailabilityStatus) VALUES
 ('JKL357', 'Bike', 0.7, 1),
 ('MNO456', 'Truck', 6.0, 1),
 ('PQR789', 'Van', 4.5, 0);
+
+-- Insert data into DeliveryDriver table
+INSERT INTO DeliveryDriver (ProviderID, VehicleID, Name, LicenseNumber, AvailabilityStatus) VALUES
+(1, 1, 'Tom Hardy', 'LIC12345', 1),
+(2, 2, 'Sarah Connor', 'LIC67890', 0),
+(3, 3, 'John Wick', 'LIC11121', 1),
+(4, 4, 'Bruce Wayne', 'LIC22232', 1),
+(5, 5, 'Clark Kent', 'LIC33343', 0),
+(6, 6, 'Diana Prince', 'LIC44454', 1),
+(7, 7, 'Barry Allen', 'LIC55565', 1),
+(8, 8, 'Peter Parker', 'LIC66676', 1),
+(9, 9, 'Tony Stark', 'LIC77787', 0),
+(10, 10, 'Steve Rogers', 'LIC88898', 1);
 
 -- Insert data into Package table
 INSERT INTO Package (OrderID, DriverID, LockerID, DeliveryStatus) VALUES
@@ -169,16 +169,16 @@ INSERT INTO Waypoint (RouteID, Location, StopTime) VALUES
 (4, 'Checkpoint D2', '2024-11-04 13:30'),
 (5, 'Checkpoint E1', '2024-11-05 14:00'),
 (5, 'Checkpoint E2', '2024-11-05 14:30');
-select * from Waypoint
-select * from DeliverySchedule
-select * from Package
-select * from Vehicle
-select * from DeliveryDriver
-select * from VerificationCode
-select * from Prescription
-select * from [Order]
-select * from Customer
-select * from DeliveryRoute
-select * from LogisticProvider
-select * from SmartLocker
-select * from LockerLocation
+
+select * from Waypoint;
+select * from DeliverySchedule;
+select * from Vehicle;
+select * from DeliveryDriver;
+select * from VerificationCode;
+select * from Prescription;
+select * from [Order];
+select * from Customer;
+select * from DeliveryRoute;
+select * from LogisticProvider;
+select * from SmartLocker;
+select * from LockerLocation;

@@ -1,9 +1,29 @@
--- Procedures
+-- Procedures 
 
--- 1. Assign a driver to a delivery route
-IF OBJECT_ID('AssignDriverToRoute', 'P') IS NOT NULL
-    DROP PROCEDURE AssignDriverToRoute;
+-- 1. Retrieve all orders for a customer
+CREATE PROCEDURE GetOrdersForCustomer
+    @CustomerID INT
+AS
+BEGIN
+    SELECT * 
+    FROM [Order]
+    WHERE CustomerID = @CustomerID;
+END;
+
 GO
+-- 2. Update the status of an order
+CREATE PROCEDURE UpdateOrderStatus
+    @OrderID INT,
+    @NewStatus VARCHAR(50)
+AS
+BEGIN
+    UPDATE [Order]
+    SET OrderStatus = @NewStatus
+    WHERE OrderID = @OrderID;
+END;
+
+GO
+-- 3. Assign a driver to a delivery route
 CREATE PROCEDURE AssignDriverToRoute
     @DriverID INT,
     @RouteID INT
@@ -13,12 +33,9 @@ BEGIN
     SET DriverID = @DriverID
     WHERE RouteID = @RouteID;
 END;
-GO
 
--- 2. Get locker utilization details
-IF OBJECT_ID('GetLockerUtilization', 'P') IS NOT NULL
-    DROP PROCEDURE GetLockerUtilization;
 GO
+-- 4. Get locker utilization details
 CREATE PROCEDURE GetLockerUtilization
 AS
 BEGIN
@@ -29,12 +46,9 @@ BEGIN
     FROM SmartLocker
     GROUP BY LockerSize;
 END;
-GO
 
--- 3. Retrieve prescription details for an order
-IF OBJECT_ID('GetPrescriptionDetails', 'P') IS NOT NULL
-    DROP PROCEDURE GetPrescriptionDetails;
 GO
+-- 5. Retrieve prescription details for an order
 CREATE PROCEDURE GetPrescriptionDetails
     @OrderID INT
 AS
@@ -43,12 +57,9 @@ BEGIN
     FROM Prescription
     WHERE OrderID = @OrderID;
 END;
-GO
 
--- 4. Verify a customer’s access to a smart locker
-IF OBJECT_ID('VerifyCustomerLockerAccess', 'P') IS NOT NULL
-    DROP PROCEDURE VerifyCustomerLockerAccess;
 GO
+-- 6. Verify a customer’s access to a smart locker
 CREATE PROCEDURE VerifyCustomerLockerAccess
     @CustomerID INT,
     @LockerID INT
@@ -60,14 +71,12 @@ BEGIN
         ELSE 'Access Denied'
     END AS AccessStatus;
 END;
-GO
 
--- Views
+
+
+-- VIEWS 
 
 -- 1. View for active delivery schedules
-GO
-IF OBJECT_ID('ActiveDeliverySchedules', 'V') IS NOT NULL
-    DROP VIEW ActiveDeliverySchedules;
 GO
 CREATE VIEW ActiveDeliverySchedules AS
 SELECT 
@@ -80,12 +89,9 @@ SELECT
 FROM DeliverySchedule DS
 JOIN DeliveryDriver DR ON DS.DriverID = DR.DriverID
 WHERE DS.EndTime > GETDATE();
-GO
 
--- 2. View for order and package details
-IF OBJECT_ID('OrderPackageDetails', 'V') IS NOT NULL
-    DROP VIEW OrderPackageDetails;
 GO
+-- 2. View for order and package details
 CREATE VIEW OrderPackageDetails AS
 SELECT 
     O.OrderID, 
@@ -94,12 +100,9 @@ SELECT
     P.DeliveryStatus
 FROM [Order] O
 JOIN Package P ON O.OrderID = P.OrderID;
-GO
 
--- 3. View for prescription verification status
-IF OBJECT_ID('PrescriptionVerificationStatus', 'V') IS NOT NULL
-    DROP VIEW PrescriptionVerificationStatus;
 GO
+-- 3. View for prescription verification status
 CREATE VIEW PrescriptionVerificationStatus AS
 SELECT 
     P.PrescriptionID, 
@@ -110,26 +113,54 @@ FROM Prescription P
 JOIN [Order] O ON P.OrderID = O.OrderID
 JOIN Customer C ON O.CustomerID = C.CustomerID;
 
+
+-- User Defined Functions: UDFs
+
+-- 1. Calculate estimated route time
 GO
-IF OBJECT_ID('RouteInefficiencyAnalysis', 'V') IS NOT NULL
-    DROP VIEW RouteInefficiencyAnalysis;
+CREATE FUNCTION CalculateRouteTime(@StartTime DATETIME, @EndTime DATETIME)
+RETURNS INT
+AS
+BEGIN
+    RETURN DATEDIFF(MINUTE, @StartTime, @EndTime);
+END;
+
+-- 2. Check driver availability
 GO
-CREATE VIEW RouteInefficiencyAnalysis AS
-SELECT 
-    dr.RouteID,
-    -- Convert EstimatedTime (time) to total minutes
-    DATEPART(HOUR, dr.EstimatedTime) * 60 + DATEPART(MINUTE, dr.EstimatedTime) AS EstimatedDuration,
-    ds.StartTime,
-    ds.EndTime,
-    -- Calculate actual duration in minutes
-    DATEDIFF(MINUTE, ds.StartTime, ds.EndTime) AS ActualDuration,
-    -- Determine inefficiency status
-    CASE 
-        WHEN DATEDIFF(MINUTE, ds.StartTime, ds.EndTime) > (DATEPART(HOUR, dr.EstimatedTime) * 60 + DATEPART(MINUTE, dr.EstimatedTime)) THEN 'Delayed'
-        WHEN DATEDIFF(MINUTE, ds.StartTime, ds.EndTime) < (DATEPART(HOUR, dr.EstimatedTime) * 60 + DATEPART(MINUTE, dr.EstimatedTime)) THEN 'Early'
-        ELSE 'On-Time'
-    END AS InefficiencyStatus
-FROM DeliveryRoute dr
-JOIN DeliverySchedule ds
-    ON dr.RouteID = ds.RouteID;
+CREATE FUNCTION IsDriverAvailable(@DriverID INT)
+RETURNS BIT
+AS
+BEGIN
+    RETURN (SELECT AvailabilityStatus FROM DeliveryDriver WHERE DriverID = @DriverID);
+END;
+
+-- 3. Get total orders for a customer
 GO
+CREATE FUNCTION GetTotalOrders(@CustomerID INT)
+RETURNS INT
+AS
+BEGIN
+    RETURN (SELECT COUNT(*) FROM [Order] WHERE CustomerID = @CustomerID);
+END;
+
+
+
+
+
+
+-- Triggers 
+
+-- Update locker status upon package delivery
+GO
+CREATE TRIGGER UpdateLockerStatus
+ON Package
+AFTER INSERT, UPDATE
+AS
+BEGIN
+    UPDATE SmartLocker
+    SET IsOccupied = CASE 
+        WHEN (SELECT DeliveryStatus FROM inserted) = 'Delivered' THEN 0
+        ELSE 1
+    END
+    WHERE LockerID IN (SELECT LockerID FROM inserted);
+END;
